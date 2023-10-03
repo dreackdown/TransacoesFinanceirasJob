@@ -4,7 +4,6 @@ import dev.hugofaria.backend.entity.Transacao;
 import dev.hugofaria.backend.entity.TransacaoCNAB;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
@@ -49,7 +48,6 @@ public class BatchConfig {
                 .build();
     }
 
-    @StepScope
     @Bean
     FlatFileItemReader<TransacaoCNAB> reader() {
         return new FlatFileItemReaderBuilder<TransacaoCNAB>()
@@ -61,5 +59,20 @@ public class BatchConfig {
                 .names("tipo", "data", "valor", "cpf", "cartao", "hora", "donoDaLoja", "nomeDaLoja")
                 .targetType(TransacaoCNAB.class)
                 .build();
+    }
+
+    @Bean
+    ItemProcessor<TransacaoCNAB, Transacao> processor() {
+        return item -> {
+
+            var transacao = new Transacao(
+                    null, item.tipo(), null, null,
+                    item.cpf(), item.cartao(), null,
+                    item.donoDaLoja().trim(), item.nomeDaLoja().trim())
+                    .withData(item.data())
+                    .withHora(item.hora());
+
+            return transacao;
+        };
     }
 }
