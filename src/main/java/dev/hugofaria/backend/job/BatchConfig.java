@@ -1,4 +1,4 @@
-package dev.hugofaria.backend;
+package dev.hugofaria.backend.job;
 
 import dev.hugofaria.backend.entity.Transacao;
 import dev.hugofaria.backend.entity.TransacaoCNAB;
@@ -9,7 +9,6 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder;
@@ -43,7 +42,10 @@ public class BatchConfig {
     }
 
     @Bean
-    Step step(ItemReader<TransacaoCNAB> reader, ItemProcessor<TransacaoCNAB, Transacao> processor, ItemWriter<Transacao> writer) {
+    Step step(
+            FlatFileItemReader<TransacaoCNAB> reader,
+            ItemProcessor<TransacaoCNAB, Transacao> processor,
+            ItemWriter<Transacao> writer) {
         return new StepBuilder("step", jobRepository)
                 .<TransacaoCNAB, Transacao>chunk(1000, transactionManager)
                 .reader(reader)
@@ -85,14 +87,14 @@ public class BatchConfig {
         return new JdbcBatchItemWriterBuilder<Transacao>()
                 .dataSource(dataSource)
                 .sql("""
-              INSERT INTO transacao (
-                tipo, data, valor, cpf, cartao,
-                hora, dono_loja, nome_loja
-              ) VALUES (
-                :tipo, :data, :valor, :cpf, :cartao,
-                :hora, :donoDaLoja, :nomeDaLoja
-              )
-            """)
+                          INSERT INTO transacao (
+                            tipo, data, valor, cpf, cartao,
+                            hora, dono_loja, nome_loja
+                          ) VALUES (
+                            :tipo, :data, :valor, :cpf, :cartao,
+                            :hora, :donoDaLoja, :nomeDaLoja
+                          )
+                        """)
                 .beanMapped()
                 .build();
     }
